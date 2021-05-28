@@ -14,7 +14,7 @@ import org.springframework.nativex.hint.NativeHint;
 import org.springframework.nativex.hint.TypeHint;
 
 @SpringBootApplication
-@NativeHint(options = { "--enable-all-security-services" })
+@NativeHint(options = { "--enable-all-security-services", "--enable-url-protocols=https" })
 @TypeHint(typeNames = {
 		"org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinActiveMqSenderConfiguration",
 		"org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinRabbitSenderConfiguration",
