@@ -15,7 +15,13 @@ import org.springframework.nativex.hint.TypeHint;
 
 @SpringBootApplication
 @NativeHint(options = { "--enable-all-security-services" })
-@TypeHint(types = CounterSummary.class)
+@TypeHint(typeNames = {
+		"org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinActiveMqSenderConfiguration",
+		"org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinRabbitSenderConfiguration",
+		"org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinKafkaSenderConfiguration",
+		"org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinRestTemplateSenderConfiguration",
+		"io.micrometer.prometheus.rsocket.PrometheusRSocketClient" },
+		types = CounterSummary.class)
 public class CounterApplication {
 
 	public static void main(String[] args) {
