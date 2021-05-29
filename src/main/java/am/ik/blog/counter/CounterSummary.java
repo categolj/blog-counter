@@ -19,4 +19,17 @@ public class CounterSummary {
 	public long getCount() {
 		return count;
 	}
+
+	public static class ByBrowser extends CounterSummary {
+		private final boolean browser;
+
+		public ByBrowser(Instant timestamp, long count, boolean browser) {
+			super(timestamp, count);
+			this.browser = browser;
+		}
+
+		public boolean isBrowser() {
+			return browser;
+		}
+	}
 }

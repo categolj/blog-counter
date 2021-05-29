@@ -31,7 +31,7 @@ public class CounterService {
 				.switchIfEmpty(this.mongoTemplate.insert(counter));
 	}
 
-	public Flux<CounterSummary> report(Criteria criteria) {
+	public Flux<CounterSummary> reportSummary(Criteria criteria) {
 		final Aggregation aggregation = Aggregation.newAggregation(Aggregation.match(criteria),
 				Aggregation.group("timestamp")
 						.first("timestamp").as("timestamp")
@@ -40,4 +40,13 @@ public class CounterService {
 		return this.mongoTemplate.aggregate(aggregation, Counter.class, CounterSummary.class);
 	}
 
+	public Flux<CounterSummary.ByBrowser> reportSummaryByBrowser(Criteria criteria) {
+		final Aggregation aggregation = Aggregation.newAggregation(Aggregation.match(criteria),
+				Aggregation.group("timestamp", "browser")
+						.first("timestamp").as("timestamp")
+						.first("browser").as("browser")
+						.sum("value").as("count"),
+				Aggregation.sort(Direction.ASC, "timestamp"));
+		return this.mongoTemplate.aggregate(aggregation, Counter.class, CounterSummary.ByBrowser.class);
+	}
 }

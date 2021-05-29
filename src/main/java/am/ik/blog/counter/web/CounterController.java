@@ -4,8 +4,11 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -13,6 +16,7 @@ import java.util.stream.Collectors;
 import am.ik.blog.counter.Counter;
 import am.ik.blog.counter.CounterService;
 import am.ik.blog.counter.CounterSummary;
+import am.ik.blog.counter.CounterSummary.ByBrowser;
 import am.ik.blog.counter.CriteriaBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
@@ -51,33 +55,67 @@ public class CounterController {
 	}
 
 	@GetMapping(path = "/{source}")
-	public Flux<?> report(
+	public Flux<?> reportSummary(
 			@PathVariable("source") URI source,
 			@RequestParam(name = "from") Optional<Instant> from,
 			@RequestParam(name = "to") Optional<Instant> to,
 			@RequestParam(name = "entryId") Optional<Integer> entryId,
-			@RequestParam(name = "browser") Optional<Boolean> browser) {
+			@RequestParam(name = "browser") Optional<Boolean> browser,
+			@RequestParam(name = "interpolate", defaultValue = "true") boolean interpolate) {
 		final Instant now = Counter.truncateTimestamp(Instant.now());
 		final Instant f = from.orElse(now.minus(1, ChronoUnit.DAYS));
 		final Instant t = to.orElse(now);
 		final Criteria criteria = new CriteriaBuilder(source, f, t, entryId, browser).build();
-		return this.counterService.report(criteria)
+		return this.counterService.reportSummary(criteria)
 				.collectList()
-				.map(list -> interpolate(list, f, t))
+				.map(list -> interpolate ? interpolate(list, f, t, timestamp -> new CounterSummary(timestamp, 0)) : list)
 				.flatMapIterable(Function.identity());
 	}
 
-	static public List<CounterSummary> interpolate(List<CounterSummary> counts, Instant from, Instant to) {
-		final List<CounterSummary> interpolated = new ArrayList<>();
+	@GetMapping(path = "/{source}/browser")
+	public Flux<?> reportSummaryByBrowser(
+			@PathVariable("source") URI source,
+			@RequestParam(name = "from") Optional<Instant> from,
+			@RequestParam(name = "to") Optional<Instant> to,
+			@RequestParam(name = "entryId") Optional<Integer> entryId,
+			@RequestParam(name = "interpolate", defaultValue = "true") boolean interpolate) {
+		final Instant now = Counter.truncateTimestamp(Instant.now());
+		final Instant f = from.orElse(now.minus(1, ChronoUnit.DAYS));
+		final Instant t = to.orElse(now);
+		final Criteria criteria = new CriteriaBuilder(source, f, t, entryId, Optional.empty()).build();
+		return this.counterService.reportSummaryByBrowser(criteria)
+				.collectList()
+				.map(list -> interpolate ? interpolate(list, f, t, timestamp -> new ByBrowser(timestamp, 0, true)) : list)
+				.flatMapIterable(Function.identity())
+				.collectMultimap(CounterSummary::getTimestamp, Function.identity())
+				.flatMapIterable(Map::entrySet)
+				.sort(Comparator.comparing(Entry::getKey))
+				.map(entry -> {
+					final Map<String, Object> map = new HashMap<>();
+					map.put("timestamp", entry.getKey());
+					entry.getValue().forEach(c -> {
+						if (c.isBrowser()) {
+							map.put("browser", c.getCount());
+						}
+						else {
+							map.put("nonBrowser", c.getCount());
+						}
+					});
+					return map;
+				});
+	}
+
+	static public <T extends CounterSummary> List<T> interpolate(List<T> counts, Instant from, Instant to, Function<Instant, T> zeroCount) {
+		final List<T> interpolated = new ArrayList<>();
 		Instant t = Counter.truncateTimestamp(from);
-		final Map<Instant, CounterSummary> countMap = counts.stream().collect(Collectors.toMap(CounterSummary::getTimestamp, Function.identity()));
+		final Map<Instant, T> countMap = counts.stream().collect(Collectors.toMap(CounterSummary::getTimestamp, Function.identity()));
 		while (t.isBefore(to)) {
-			final CounterSummary count = countMap.get(t);
+			final T count = countMap.get(t);
 			if (count != null) {
 				interpolated.add(count);
 			}
 			else {
-				interpolated.add(new CounterSummary(t, 0));
+				interpolated.add(zeroCount.apply(t));
 			}
 			t = t.plus(15, ChronoUnit.MINUTES);
 		}
