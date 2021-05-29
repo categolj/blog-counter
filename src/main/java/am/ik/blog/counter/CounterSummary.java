@@ -2,7 +2,7 @@ package am.ik.blog.counter;
 
 import java.time.Instant;
 
-public class CounterSummary {
+public class CounterSummary implements TimestampHolder<CounterSummary> {
 	private final Instant timestamp;
 
 	private final long count;
@@ -12,12 +12,18 @@ public class CounterSummary {
 		this.count = count;
 	}
 
+	@Override
 	public Instant getTimestamp() {
 		return timestamp;
 	}
 
 	public long getCount() {
 		return count;
+	}
+
+	@Override
+	public CounterSummary unwrap() {
+		return this;
 	}
 
 	public static class ByBrowser extends CounterSummary {

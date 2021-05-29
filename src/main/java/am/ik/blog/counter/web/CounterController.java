@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 import am.ik.blog.counter.Counter;
 import am.ik.blog.counter.CounterService;
 import am.ik.blog.counter.CounterSummary;
-import am.ik.blog.counter.CounterSummary.ByBrowser;
 import am.ik.blog.counter.CriteriaBuilder;
+import am.ik.blog.counter.TimestampHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.cloudevents.CloudEvent;
 import reactor.core.publisher.Flux;
@@ -84,9 +84,6 @@ public class CounterController {
 		final Instant t = to.orElse(now);
 		final Criteria criteria = new CriteriaBuilder(source, f, t, entryId, Optional.empty()).build();
 		return this.counterService.reportSummaryByBrowser(criteria)
-				.collectList()
-				.map(list -> interpolate ? interpolate(list, f, t, timestamp -> new ByBrowser(timestamp, 0, true)) : list)
-				.flatMapIterable(Function.identity())
 				.collectMultimap(CounterSummary::getTimestamp, Function.identity())
 				.flatMapIterable(Map::entrySet)
 				.sort(Comparator.comparing(Entry::getKey))
@@ -101,16 +98,45 @@ public class CounterController {
 							map.put("nonBrowser", c.getCount());
 						}
 					});
-					return map;
-				});
+					return new TimestampHolder<Map<String, Object>>() {
+
+						@Override
+						public Instant getTimestamp() {
+							return entry.getKey();
+						}
+
+						@Override
+						public Map<String, Object> unwrap() {
+							return map;
+						}
+					};
+				})
+				.collectList()
+				.map(list -> interpolate ? interpolate(list, f, t, timestamp -> new TimestampHolder<Map<String, Object>>() {
+
+					@Override
+					public Instant getTimestamp() {
+						return timestamp;
+					}
+
+					@Override
+					public Map<String, Object> unwrap() {
+						return Map.of("timestamp", timestamp,
+								"browser", 0,
+								"nonBrowser", 0);
+					}
+				}) : list)
+				.flatMapIterable(x -> x.stream()
+						.map(TimestampHolder::unwrap)
+						.collect(Collectors.toList()));
 	}
 
-	static public <T extends CounterSummary> List<T> interpolate(List<T> counts, Instant from, Instant to, Function<Instant, T> zeroCount) {
-		final List<T> interpolated = new ArrayList<>();
+	static public <T> List<TimestampHolder<T>> interpolate(List<? extends TimestampHolder<T>> counts, Instant from, Instant to, Function<Instant, TimestampHolder<T>> zeroCount) {
+		final List<TimestampHolder<T>> interpolated = new ArrayList<>();
 		Instant t = Counter.truncateTimestamp(from);
-		final Map<Instant, T> countMap = counts.stream().collect(Collectors.toMap(CounterSummary::getTimestamp, Function.identity()));
+		final Map<Instant, TimestampHolder<T>> countMap = counts.stream().collect(Collectors.toMap(TimestampHolder::getTimestamp, Function.identity()));
 		while (t.isBefore(to)) {
-			final T count = countMap.get(t);
+			final TimestampHolder<T> count = countMap.get(t);
 			if (count != null) {
 				interpolated.add(count);
 			}
