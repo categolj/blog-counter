@@ -21,7 +21,7 @@ import org.springframework.nativex.hint.TypeHint;
 		"org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinKafkaSenderConfiguration",
 		"org.springframework.cloud.sleuth.autoconfig.zipkin2.ZipkinRestTemplateSenderConfiguration",
 		"io.micrometer.prometheus.rsocket.PrometheusRSocketClient" },
-		types = CounterSummary.class)
+		types = { CounterSummary.class, CounterSummary.ByBrowser.class })
 public class CounterApplication {
 
 	public static void main(String[] args) {
