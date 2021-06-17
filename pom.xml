@@ -19,7 +19,7 @@
 		<spring-cloud.version>2020.0.3-SNAPSHOT</spring-cloud.version>
 		<spring-native.version>0.10.0-SNAPSHOT</spring-native.version>
 		<antlr.version>4.9.2</antlr.version>
-		<cloudevents.version>2.1.1</cloudevents.version>
+		<cloudevents.version>2.2.0</cloudevents.version>
 	</properties>
 	<dependencies>
 		<dependency>
