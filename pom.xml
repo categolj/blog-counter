@@ -16,7 +16,7 @@
 	<description>Demo project for Spring Boot</description>
 	<properties>
 		<java.version>11</java.version>
-		<spring-cloud.version>2020.0.3-SNAPSHOT</spring-cloud.version>
+		<spring-cloud.version>2020.0.3</spring-cloud.version>
 		<spring-native.version>0.10.1</spring-native.version>
 		<antlr.version>4.9.2</antlr.version>
 		<cloudevents.version>2.2.0</cloudevents.version>
@@ -182,6 +182,14 @@
 		</plugins>
 	</build>
 	<repositories>
+    <repository>
+      <id>spring-releases</id>
+      <name>Spring Releases</name>
+      <url>https://repo.spring.io/release</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>		
 		<repository>
 			<id>spring-snapshots</id>
 			<name>Spring Snapshots</name>
@@ -192,11 +200,19 @@
 		</repository>
 	</repositories>
 	<pluginRepositories>
+    <pluginRepository>
+      <id>spring-releases</id>
+      <name>Spring Releases</name>
+      <url>https://repo.spring.io/release</url>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>		
 		<pluginRepository>
 			<id>spring-snapshots</id>
 			<name>Spring Snapshots</name>
 			<url>https://repo.spring.io/snapshot</url>
-		</pluginRepository>
+		</pluginRepository>		
 	</pluginRepositories>
 
 </project>
