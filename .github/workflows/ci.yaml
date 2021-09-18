@@ -84,7 +84,7 @@ jobs:
           --tag ${IMAGE_NAME} \
           --wait \
           --env BP_NATIVE_IMAGE=true \
-          --env MAVEN_OPTS=-Dspring-boot.version=${BOOT_VERSION} \          
+          --env MAVEN_OPTS=-Dspring-boot.version=${BOOT_VERSION} \
           --cluster-builder tiny \
           --git https://github.com/categolj/blog-counter.git \
           --git-revision ${GITHUB_SHA}
