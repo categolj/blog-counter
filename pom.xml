@@ -19,7 +19,7 @@
 		<spring-cloud.version>2020.0.4</spring-cloud.version>
 		<spring-native.version>0.10.4</spring-native.version>
 		<antlr.version>4.9.2</antlr.version>
-		<cloudevents.version>2.2.0</cloudevents.version>
+		<cloudevents.version>2.3.0</cloudevents.version>
 		<wavefront.version>2.2.0</wavefront.version>
 	</properties>
 	<dependencies>
